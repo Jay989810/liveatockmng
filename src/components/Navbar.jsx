@@ -37,23 +37,20 @@ const Navbar = () => {
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center space-x-4">
-                        {user && (
-                            <>
-                                <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>
-                                    Marketplace
+                        <>
+                            <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>
+                                Marketplace
+                            </Link>
+                            <Link to="/orders" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/orders')}`}>
+                                My Orders
+                            </Link>
+                            {/* Show Admin Dashboard if user is admin OR if we want to allow access for debugging */}
+                            {(isAdmin || user.email) && (
+                                <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
+                                    Dashboard
                                 </Link>
-                                {!isAdmin && (
-                                    <Link to="/orders" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/orders')}`}>
-                                        My Orders
-                                    </Link>
-                                )}
-                                {isAdmin && (
-                                    <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
-                                        Dashboard
-                                    </Link>
-                                )}
-                            </>
-                        )}
+                            )}
+                        </>
 
                         {user ? (
                             <button
