@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Link } from 'react-router-dom'
 import Spinner from '../components/Spinner'
+import toast from 'react-hot-toast'
 
 const Marketplace = () => {
     const [livestock, setLivestock] = useState([])
@@ -45,25 +46,35 @@ const Marketplace = () => {
     return (
         <div className="flex-grow bg-gray-50 flex flex-col">
             {/* Hero Section */}
-            <div className="relative bg-gray-900 text-white h-[500px] flex items-center justify-center overflow-hidden">
+            <div className="relative bg-gray-900 text-white h-[600px] flex items-center justify-center overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img
-                        src="https://images.unsplash.com/photo-1545468849-063f683e9b13?q=80&w=2070&auto=format&fit=crop"
-                        alt="Background Livestock"
-                        className="w-full h-full object-cover opacity-40 hover:scale-105 transition-transform duration-[20s]"
+                        src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=2074&auto=format&fit=crop"
+                        alt="Background Livestock Herd"
+                        className="w-full h-full object-cover opacity-60"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-gray-900/90"></div>
                 </div>
 
-                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center bg-transparent">
-                    <h2 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 drop-shadow-lg">Premium Livestock Market</h2>
-                    <p className="text-gray-200 text-xl max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
-                        Secure, verified, and quality-assured livestock for your agricultural needs.
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <span className="inline-block py-1 px-3 rounded-full bg-blue-600/30 border border-blue-500/50 text-blue-200 text-sm font-semibold mb-6 backdrop-blur-sm">
+                        #1 Livestock Management Platform
+                    </span>
+                    <h2 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 drop-shadow-2xl text-white">
+                        Premium Livestock <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">Marketplace</span>
+                    </h2>
+                    <p className="text-gray-100 text-xl md:text-2xl max-w-3xl mx-auto font-light leading-relaxed drop-shadow-lg mb-10">
+                        Connect directly with verified breeders. Secure transactions, quality assured animals, and seamless logistics.
                     </p>
-                    <div className="mt-8">
-                        <a href="#browse" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 inline-block">
-                            Start Browsing
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="#browse" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1 text-lg">
+                            Browse Inventory
                         </a>
+                        <Link to="/register" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all transform hover:-translate-y-1 text-lg">
+                            Sell Livestock
+                        </Link>
                     </div>
                 </div>
             </div>
