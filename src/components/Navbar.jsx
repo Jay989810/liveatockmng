@@ -45,7 +45,7 @@ const Navbar = () => {
                                 My Orders
                             </Link>
                             {/* Show Admin Dashboard if user is admin OR if we want to allow access for debugging */}
-                            {(isAdmin || user.email) && (
+                            {(isAdmin || user?.email) && (
                                 <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
                                     Dashboard
                                 </Link>

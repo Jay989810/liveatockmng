@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
                 console.warn('Auth check timed out, forcing loading false');
                 setLoading(false);
             }
-        }, 5000); // 5 seconds timeout
+        }, 3000); // Reduced to 3 seconds for faster response
 
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!mounted) return;
