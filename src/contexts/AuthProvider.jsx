@@ -9,7 +9,10 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [isAdmin, setIsAdmin] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(() => {
+        // Initialize from local storage to prevent flicker
+        return localStorage.getItem('livestock_is_admin') === 'true'
+    })
 
     useEffect(() => {
         let mounted = true;
@@ -81,14 +84,21 @@ export const AuthProvider = ({ children }) => {
                 .eq('id', userId)
                 .single()
 
-            // If error (e.g. no profile found), just treat as non-admin
             if (data) {
-                setIsAdmin(data.is_admin)
+                const isAdminValue = data.is_admin || false
+                setIsAdmin(isAdminValue)
+                // Cache it to prevent flickering on next reload
+                if (isAdminValue) localStorage.setItem('livestock_is_admin', 'true')
+                else localStorage.removeItem('livestock_is_admin')
             } else {
                 setIsAdmin(false)
+                localStorage.removeItem('livestock_is_admin')
             }
         } catch (error) {
             console.error('Error checking admin status:', error)
+            // Fallback: don't overwrite if we have a cached true value? 
+            // Better safe than sorry: deny access if check fails, but maybe keep cached if network error?
+            // For now, fail safe.
             setIsAdmin(false)
         } finally {
             setLoading(false)
