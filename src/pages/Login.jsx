@@ -34,11 +34,8 @@ const Login = () => {
                 setLoading(false)
             } else {
                 toast.success('Welcome back!', { id: toastId })
-                // NUCLEAR OPTION: Force full reload to ensure AuthProvider initializes from scratch.
-                // This eliminates all race conditions with context updates.
-                setTimeout(() => {
-                    window.location.href = '/'
-                }, 500)
+                // Instant navigation (SPA feel)
+                navigate('/')
             }
         } catch (error) {
             toast.error('An unexpected error occurred', { id: toastId })

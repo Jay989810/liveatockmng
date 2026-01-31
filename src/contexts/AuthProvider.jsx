@@ -128,24 +128,20 @@ export const AuthProvider = ({ children }) => {
     }
 
     const customSignOut = async () => {
-        setLoading(true) // Show loading while signing out
+        // Optimistic Output: Clear local state immediately for instant UI feedback
+        setUser(null)
+        setSession(null)
+        setIsAdmin(false)
+        localStorage.removeItem('livestock_is_admin')
+
+        // Don't set loading=true, just let the router handle the view switch
         try {
+            // Fire and forget (or await if you want to be sure, but Supabase is fast enough)
             await supabase.auth.signOut()
         } catch (error) {
             console.error('Error signing out:', error)
-        } finally {
-            // Force clear critical state
-            setUser(null)
-            setSession(null)
-            setIsAdmin(false)
-
-            // Clear local storage completely to remove any stale data
-            localStorage.clear()
-            sessionStorage.clear()
-
-            // Force reload to clear memory
-            window.location.href = '/' // Redirect to home/login and reload
         }
+        // No window.location.href = '/' here. Let the calling component (Navbar) navigate.
     }
 
     const value = {
