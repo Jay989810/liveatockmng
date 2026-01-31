@@ -14,6 +14,14 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true;
 
+        // EMERGENCY TIMEOUT: Force app to load after 3 seconds even if Supabase is slow
+        const safetyTimer = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn('Auth check timed out, forcing application load');
+                setLoading(false);
+            }
+        }, 3000);
+
         // Function to handle session setup
         const initializeAuth = async () => {
             try {
@@ -60,6 +68,7 @@ export const AuthProvider = ({ children }) => {
 
         return () => {
             mounted = false;
+            clearTimeout(safetyTimer);
             subscription.unsubscribe()
         }
     }, [])
