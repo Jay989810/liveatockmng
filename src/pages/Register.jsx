@@ -15,22 +15,30 @@ const Register = () => {
         setLoading(true)
         const toastId = toast.loading('Creating account...')
 
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName,
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                    }
                 }
-            }
-        })
+            })
 
-        if (error) {
-            toast.error(error.message, { id: toastId })
+            if (error) {
+                console.error('Signup error:', error)
+                toast.error(`Signup failed: ${error.message}`, { id: toastId, duration: 5000 })
+                setLoading(false)
+            } else {
+                console.log('Signup successful:', data)
+                toast.success('Registration successful! Please login.', { id: toastId })
+                navigate('/login')
+            }
+        } catch (err) {
+            console.error('Unexpected signup error:', err)
+            toast.error(`Error: ${err.message || 'Unknown error'}`, { id: toastId, duration: 5000 })
             setLoading(false)
-        } else {
-            toast.success('Registration successful! Please login.', { id: toastId })
-            navigate('/login')
         }
     }
 
