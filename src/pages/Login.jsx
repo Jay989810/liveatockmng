@@ -34,8 +34,9 @@ const Login = () => {
                 setLoading(false)
             } else {
                 toast.success('Welcome back!', { id: toastId })
-                // We rely on the useEffect to redirect once AuthProvider updates the user state.
-                // This prevents race conditions where we redirect before 'user' is ready.
+                // Force navigation immediately. The AuthProvider will update in the background.
+                // This makes the UI feel instant.
+                navigate('/')
             }
         } catch (error) {
             toast.error('An unexpected error occurred', { id: toastId })

@@ -128,6 +128,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     const customSignOut = async () => {
+        setLoading(true) // Show loading while signing out
         try {
             await supabase.auth.signOut()
         } catch (error) {
@@ -138,13 +139,12 @@ export const AuthProvider = ({ children }) => {
             setSession(null)
             setIsAdmin(false)
 
-            // Clear specific keys instead of clear() to avoid 'app_version' loop issues if we restart
-            localStorage.removeItem('livestock_is_admin')
-            localStorage.removeItem('livestock_cart')
-            // Don't remove 'app_version'
+            // Clear local storage completely to remove any stale data
+            localStorage.clear()
+            sessionStorage.clear()
 
-            // Force redirect to login which is cleaner
-            window.location.href = '/login'
+            // Force reload to clear memory
+            window.location.href = '/' // Redirect to home/login and reload
         }
     }
 
