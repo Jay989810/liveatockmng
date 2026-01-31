@@ -15,33 +15,36 @@ export const AuthProvider = ({ children }) => {
     })
 
     // UNIQUE VERSION IDENTIFIER - UPDATE THIS ON EVERY MAJOR DEPLOYMENT
-    const APP_VERSION = 'deploy-2026-01-31-v1'
+    const APP_VERSION = 'deploy-2026-01-31-v2-persistent'
 
     useEffect(() => {
-        // Version Check & Cache Clear
+        // Version Check & Cache Clear strategy
         const storedVersion = localStorage.getItem('app_version')
         if (storedVersion !== APP_VERSION) {
-            console.log(`New version detected (${APP_VERSION}). Clearing storage.`)
+            console.log(`New version detected (${APP_VERSION}). Clearing stale data.`)
+
+            // Clear ONLY app-specific data, preserving keys if needed or just clear all
+            // Ideally we clear everything to be safe on a major version change
             localStorage.clear()
             sessionStorage.clear()
+
             localStorage.setItem('app_version', APP_VERSION)
 
-            // Allow time for storage clear to settle? Usually sync.
-            // Alert user so they aren't confused
-            alert('A new update has been deployed! You have been logged out to ensure you have the latest features. Please login again.')
-            window.location.reload()
+            // We do NOT reload here if it's a fresh visit to avoid loops.
+            // But if the user was using an old version, their state might be weird.
+            // Since we cleared local storage, Supabase token is gone, so they are logged out effectively.
             return
         }
 
         let mounted = true;
 
-        // EMERGENCY TIMEOUT: Force app to load after 10 seconds (increased from 3s)
+        // EMERGENCY TIMEOUT: Force app to load after 5 seconds
         const safetyTimer = setTimeout(() => {
             if (mounted && loading) {
                 console.warn('Auth check timed out, forcing application load');
                 setLoading(false);
             }
-        }, 10000);
+        }, 5000);
 
         // Function to handle session setup
         const initializeAuth = async () => {
@@ -55,9 +58,9 @@ export const AuthProvider = ({ children }) => {
                     if (session?.user) {
                         setSession(session)
                         setUser(session.user)
-                        await checkAdmin(session.user.id)
+                        // Don't await checkAdmin to block UI locally if possible, but for admin portal it helps
+                        checkAdmin(session.user.id)
                     } else {
-                        // Definitely logged out
                         setLoading(false)
                     }
                 }
@@ -69,20 +72,21 @@ export const AuthProvider = ({ children }) => {
 
         initializeAuth()
 
-        // 2. Set up live listener for auth changes (sign in, sign out, refresh)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // 2. Set up live listener for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return
+
+            console.log('Auth State Change:', event); // Debug log
 
             setSession(session)
             setUser(session?.user ?? null)
 
             if (session?.user) {
-                // If we get a user update and we aren't loading, or if we switched users
-                // we might want to refresh admin status.
-                // But mainly we care about the initial load or sign-in.
+                // Optimization: Only check admin if we don't have it trusted yet
                 if (!isAdmin) await checkAdmin(session.user.id)
             } else {
                 setIsAdmin(false)
+                localStorage.removeItem('livestock_is_admin')
                 setLoading(false)
             }
         })
@@ -105,7 +109,6 @@ export const AuthProvider = ({ children }) => {
             if (data) {
                 const isAdminValue = data.is_admin || false
                 setIsAdmin(isAdminValue)
-                // Cache it to prevent flickering on next reload
                 if (isAdminValue) localStorage.setItem('livestock_is_admin', 'true')
                 else localStorage.removeItem('livestock_is_admin')
             } else {
@@ -114,9 +117,8 @@ export const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Error checking admin status:', error)
-            // Fallback: don't overwrite if we have a cached true value? 
-            // Better safe than sorry: deny access if check fails, but maybe keep cached if network error?
-            // For now, fail safe.
+            // Do NOT wipe admin status on error if we had it cached? 
+            // Safer to deny access on error for security.
             setIsAdmin(false)
         } finally {
             setLoading(false)
@@ -129,13 +131,18 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Error signing out:', error)
         } finally {
-            // Force clear state
+            // Force clear critical state
             setUser(null)
             setSession(null)
             setIsAdmin(false)
-            // Clear all local storage to be safe as requested
-            localStorage.clear()
-            sessionStorage.clear()
+
+            // Clear specific keys instead of clear() to avoid 'app_version' loop issues if we restart
+            localStorage.removeItem('livestock_is_admin')
+            localStorage.removeItem('livestock_cart')
+            // Don't remove 'app_version'
+
+            // Force redirect to login which is cleaner
+            window.location.href = '/login'
         }
     }
 

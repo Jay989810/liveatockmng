@@ -6,12 +6,15 @@ const CartContext = createContext({})
 export const useCart = () => useContext(CartContext)
 
 export const CartProvider = ({ children }) => {
-    const [cart, setCart] = useState([])
-
-    useEffect(() => {
-        const storedCart = localStorage.getItem('livestock_cart')
-        if (storedCart) setCart(JSON.parse(storedCart))
-    }, [])
+    const [cart, setCart] = useState(() => {
+        try {
+            const storedCart = localStorage.getItem('livestock_cart')
+            return storedCart ? JSON.parse(storedCart) : []
+        } catch (error) {
+            console.error('Error parsing cart from storage', error)
+            return []
+        }
+    })
 
     useEffect(() => {
         localStorage.setItem('livestock_cart', JSON.stringify(cart))
