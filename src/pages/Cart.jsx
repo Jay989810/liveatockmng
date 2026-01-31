@@ -12,6 +12,10 @@ const Cart = () => {
     const { user } = useAuth()
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
+    const mounted = true // Just use a simple variable for now, or remove the check since finally block is safe enough typically.
+    // Actually, let's just remove 'if (mounted)' from the previous step if I can't easily add the hook logic without re-rendering everything.
+    // Wait, I can just not use 'mounted' variable and trust React.
+
 
     // Checkout Form State
     const [deliveryDetails, setDeliveryDetails] = useState(() => {
@@ -102,17 +106,27 @@ const Cart = () => {
                 price: item.price
             }))
 
+            // Ensure no undefined values are passed to RPC
+            const safeDetails = {
+                recipient_name: deliveryDetails.recipient_name || '',
+                phone_number: deliveryDetails.phone_number || '',
+                state: deliveryDetails.state || '',
+                city: deliveryDetails.city || '',
+                delivery_address: deliveryDetails.delivery_address || '',
+                delivery_instructions: deliveryDetails.delivery_instructions || ''
+            }
+
             // Call the secure RPC function
             const { error: rpcError } = await supabase.rpc('complete_order', {
                 p_user_id: user.id,
                 p_items: orderItems,
                 p_payment_ref: paymentResponse.tx_ref,
-                p_recipient_name: deliveryDetails.recipient_name,
-                p_phone_number: deliveryDetails.phone_number,
-                p_state: deliveryDetails.state,
-                p_city: deliveryDetails.city,
-                p_delivery_address: deliveryDetails.delivery_address,
-                p_delivery_instructions: deliveryDetails.delivery_instructions
+                p_recipient_name: safeDetails.recipient_name,
+                p_phone_number: safeDetails.phone_number,
+                p_state: safeDetails.state,
+                p_city: safeDetails.city,
+                p_delivery_address: safeDetails.delivery_address,
+                p_delivery_instructions: safeDetails.delivery_instructions
             })
 
             if (rpcError) throw rpcError
@@ -123,9 +137,10 @@ const Cart = () => {
 
         } catch (error) {
             console.error('Order processing error:', error)
-            toast.error('Error recording order. Please contact support.', { id: toastId })
+            // Show the ACTUAL error message to the user/developer
+            toast.error(`Order failed: ${error.message || error.details || 'Contact support'}`, { id: toastId, duration: 5000 })
         } finally {
-            setLoading(false)
+            if (mounted) setLoading(false)
             closePaymentModal()
         }
     }
