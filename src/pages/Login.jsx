@@ -34,9 +34,11 @@ const Login = () => {
                 setLoading(false)
             } else {
                 toast.success('Welcome back!', { id: toastId })
-                // Force navigation immediately. The AuthProvider will update in the background.
-                // This makes the UI feel instant.
-                navigate('/')
+                // NUCLEAR OPTION: Force full reload to ensure AuthProvider initializes from scratch.
+                // This eliminates all race conditions with context updates.
+                setTimeout(() => {
+                    window.location.href = '/'
+                }, 500)
             }
         } catch (error) {
             toast.error('An unexpected error occurred', { id: toastId })
