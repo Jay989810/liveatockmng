@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthProvider'
 import toast from 'react-hot-toast'
 
 const Login = () => {
-    const { user, setUser } = useAuth()
+    const { user, setUser, checkAdmin } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -36,6 +36,8 @@ const Login = () => {
                 // Manual State Update to beat the race condition
                 if (data?.session?.user) {
                     setUser(data.session.user)
+                    // Optimistically check admin status immediately
+                    checkAdmin(data.session.user.id)
                 }
 
                 toast.success('Welcome back!', { id: toastId })
