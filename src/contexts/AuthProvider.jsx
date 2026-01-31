@@ -81,11 +81,27 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const customSignOut = async () => {
+        try {
+            await supabase.auth.signOut()
+        } catch (error) {
+            console.error('Error signing out:', error)
+        } finally {
+            // Force clear state
+            setUser(null)
+            setSession(null)
+            setIsAdmin(false)
+            // Clear all local storage to be safe as requested
+            localStorage.clear()
+            sessionStorage.clear()
+        }
+    }
+
     const value = {
         session,
         user,
         isAdmin,
-        signOut: () => supabase.auth.signOut(),
+        signOut: customSignOut,
     }
 
     return (
