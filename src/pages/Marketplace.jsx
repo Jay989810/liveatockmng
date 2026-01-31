@@ -28,8 +28,8 @@ const Marketplace = () => {
             if (error) throw error
             setLivestock(data)
         } catch (error) {
-            console.error('Error fetching livestock:', error.message)
-            toast.error('Could not load livestock. Please check your connection.')
+            console.error('Error fetching livestock:', error)
+            toast.error(`Could not load livestock: ${error.message}`)
         } finally {
             clearTimeout(timer)
             setLoading(false)
