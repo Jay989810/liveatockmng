@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthProvider'
@@ -10,6 +10,11 @@ const Login = () => {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
+    const mounted = useRef(true)
+
+    useEffect(() => {
+        return () => { mounted.current = false }
+    }, [])
 
     // Redirect if already logged in (handles the delay after login success)
     useEffect(() => {
@@ -31,25 +36,25 @@ const Login = () => {
 
             if (error) {
                 toast.error(error.message, { id: toastId })
-                setLoading(false)
             } else {
                 // Manual State Update to beat the race condition
                 if (data?.session?.user) {
                     setUser(data.session.user)
-                    // Optimistically check admin status immediately
-                    checkAdmin(data.session.user.id)
+                    // Fire and forget - don't await this, so navigation happens INSTANTLY
+                    checkAdmin(data.session.user.id).catch(err => console.error("Admin check warning:", err))
                 }
 
                 toast.success('Welcome back!', { id: toastId })
 
-                // Allow a tiny tick for state to settle, then go. 
-                // Using replace: true to prevent back-button loops
+                // Navigate immediately
                 navigate('/', { replace: true })
             }
         } catch (error) {
             console.error('Login error:', error)
             toast.error('An unexpected error occurred', { id: toastId })
-            setLoading(false)
+        } finally {
+            // Ensure loading is ALWAYS turned off, no matter what
+            if (mounted.current) setLoading(false)
         }
     }
 
