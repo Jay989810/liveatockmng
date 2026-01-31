@@ -1,30 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthProvider'
 import toast from 'react-hot-toast'
 
 const Login = () => {
+    const { user } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
+
+    // Redirect if already logged in (handles the delay after login success)
+    useEffect(() => {
+        if (user) {
+            navigate('/')
+        }
+    }, [user, navigate])
 
     const handleLogin = async (e) => {
         e.preventDefault()
         setLoading(true)
         const toastId = toast.loading('Signing in...')
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
 
-        if (error) {
-            toast.error(error.message, { id: toastId })
+            if (error) {
+                toast.error(error.message, { id: toastId })
+                setLoading(false)
+            } else {
+                toast.success('Welcome back!', { id: toastId })
+                // We rely on the useEffect to redirect once AuthProvider updates the user state.
+                // This prevents race conditions where we redirect before 'user' is ready.
+            }
+        } catch (error) {
+            toast.error('An unexpected error occurred', { id: toastId })
             setLoading(false)
-        } else {
-            toast.success('Welcome back!', { id: toastId })
-            navigate('/')
         }
     }
 
