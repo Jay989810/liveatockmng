@@ -14,7 +14,25 @@ export const AuthProvider = ({ children }) => {
         return localStorage.getItem('livestock_is_admin') === 'true'
     })
 
+    // UNIQUE VERSION IDENTIFIER - UPDATE THIS ON EVERY MAJOR DEPLOYMENT
+    const APP_VERSION = 'deploy-2026-01-31-v1'
+
     useEffect(() => {
+        // Version Check & Cache Clear
+        const storedVersion = localStorage.getItem('app_version')
+        if (storedVersion !== APP_VERSION) {
+            console.log(`New version detected (${APP_VERSION}). Clearing storage.`)
+            localStorage.clear()
+            sessionStorage.clear()
+            localStorage.setItem('app_version', APP_VERSION)
+
+            // Allow time for storage clear to settle? Usually sync.
+            // Alert user so they aren't confused
+            alert('A new update has been deployed! You have been logged out to ensure you have the latest features. Please login again.')
+            window.location.reload()
+            return
+        }
+
         let mounted = true;
 
         // EMERGENCY TIMEOUT: Force app to load after 10 seconds (increased from 3s)
