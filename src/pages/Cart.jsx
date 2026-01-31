@@ -79,41 +79,26 @@ const Cart = () => {
         const toastId = toast.loading('Processing order...')
 
         try {
-            // Create transaction records for each item
-            const transactions = cart.map(item => ({
-                user_id: user.id,
-                livestock_id: item.id,
-                amount: item.price,
-                flutterwave_ref: paymentResponse.tx_ref,
-                status: 'Successful',
-                delivery_status: 'Processing',
-                recipient_name: deliveryDetails.recipient_name,
-                phone_number: deliveryDetails.phone_number,
-                state: deliveryDetails.state,
-                city: deliveryDetails.city,
-                delivery_address: deliveryDetails.delivery_address,
-                delivery_instructions: deliveryDetails.delivery_instructions
+            // Prepare items for RPC
+            const orderItems = cart.map(item => ({
+                id: item.id,
+                price: item.price
             }))
 
-            const { error: txError } = await supabase
-                .from('transactions')
-                .insert(transactions)
+            // Call the secure RPC function
+            const { error: rpcError } = await supabase.rpc('complete_order', {
+                p_user_id: user.id,
+                p_items: orderItems,
+                p_payment_ref: paymentResponse.tx_ref,
+                p_recipient_name: deliveryDetails.recipient_name,
+                p_phone_number: deliveryDetails.phone_number,
+                p_state: deliveryDetails.state,
+                p_city: deliveryDetails.city,
+                p_delivery_address: deliveryDetails.delivery_address,
+                p_delivery_instructions: deliveryDetails.delivery_instructions
+            })
 
-            if (txError) throw txError
-
-            // Update livestock status (Sold) and decrement quantity
-            for (const item of cart) {
-                const { data: lsData } = await supabase.from('livestock').select('quantity').eq('id', item.id).single()
-                const newQty = (lsData?.quantity || 1) - 1
-
-                await supabase
-                    .from('livestock')
-                    .update({
-                        quantity: newQty,
-                        status: newQty <= 0 ? 'Sold' : 'Available'
-                    })
-                    .eq('id', item.id)
-            }
+            if (rpcError) throw rpcError
 
             clearCart()
             toast.success('Order placed successfully!', { id: toastId })
