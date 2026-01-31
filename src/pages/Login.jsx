@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthProvider'
 import toast from 'react-hot-toast'
 
 const Login = () => {
-    const { user } = useAuth()
+    const { user, setUser } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -24,7 +24,7 @@ const Login = () => {
         const toastId = toast.loading('Signing in...')
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
@@ -33,11 +33,19 @@ const Login = () => {
                 toast.error(error.message, { id: toastId })
                 setLoading(false)
             } else {
+                // Manual State Update to beat the race condition
+                if (data?.session?.user) {
+                    setUser(data.session.user)
+                }
+
                 toast.success('Welcome back!', { id: toastId })
-                // Instant navigation (SPA feel)
-                navigate('/')
+
+                // Allow a tiny tick for state to settle, then go. 
+                // Using replace: true to prevent back-button loops
+                navigate('/', { replace: true })
             }
         } catch (error) {
+            console.error('Login error:', error)
             toast.error('An unexpected error occurred', { id: toastId })
             setLoading(false)
         }

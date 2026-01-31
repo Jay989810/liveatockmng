@@ -147,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     const value = {
         session,
         user,
+        setUser, // <--- Exposed for manual updates to fix race conditions
         isAdmin,
         signOut: customSignOut,
     }
