@@ -82,7 +82,14 @@ const Orders = () => {
                                                         <p className="text-xs text-gray-400">Order ID: {order.id.slice(0, 8)}</p>
                                                         <div className="mt-1 text-xs text-gray-500">
                                                             <p><span className="font-semibold">Delivering to:</span> {order.recipient_name || 'You'}</p>
-                                                            <p className="truncate max-w-xs">{order.delivery_address}</p>
+                                                            <p className="truncate max-w-xs">
+                                                                {order.delivery_address}
+                                                                {order.city ? `, ${order.city}` : ''}
+                                                                {order.state ? `, ${order.state}` : ''}
+                                                            </p>
+                                                            {order.delivery_instructions && (
+                                                                <p className="italic text-gray-400 mt-0.5">Note: {order.delivery_instructions}</p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

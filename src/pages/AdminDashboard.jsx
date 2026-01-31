@@ -572,7 +572,15 @@ const AdminDashboard = () => {
                                                 <td className="px-6 py-4 max-w-xs truncate">
                                                     <p className="font-medium text-gray-900">{order.recipient_name || 'Same as Cust.'}</p>
                                                     <p className="text-xs text-gray-500 truncate">{order.delivery_address || 'No Address'}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {order.city ? `${order.city}, ${order.state}` : ''}
+                                                    </p>
                                                     <p className="text-xs text-gray-500">{order.phone_number}</p>
+                                                    {order.delivery_instructions && (
+                                                        <p className="text-xs text-blue-500 italic truncate" title={order.delivery_instructions}>
+                                                            Note: {order.delivery_instructions}
+                                                        </p>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <p className="font-medium text-gray-900">{order.livestock?.breed || 'Deleted'}</p>
@@ -591,8 +599,8 @@ const AdminDashboard = () => {
                                                         value={order.delivery_status || 'Processing'}
                                                         onChange={(e) => handleUpdateDeliveryStatus(order.id, e.target.value)}
                                                         className={`text-xs font-bold py-1 px-2 rounded border focus:outline-none cursor-pointer ${(order.delivery_status || 'Processing') === 'Delivered'
-                                                                ? 'bg-green-50 text-green-700 border-green-200'
-                                                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                            : 'bg-blue-50 text-blue-700 border-blue-200'
                                                             }`}
                                                     >
                                                         <option value="Processing">Processing</option>

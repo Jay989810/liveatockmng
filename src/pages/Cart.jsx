@@ -16,8 +16,11 @@ const Cart = () => {
     // Checkout Form State
     const [deliveryDetails, setDeliveryDetails] = useState({
         recipient_name: user?.user_metadata?.full_name || '',
+        phone_number: '',
+        state: '',
+        city: '',
         delivery_address: '',
-        phone_number: ''
+        delivery_instructions: ''
     })
 
     const handleInputChange = (e) => {
@@ -85,8 +88,11 @@ const Cart = () => {
                 status: 'Successful',
                 delivery_status: 'Processing',
                 recipient_name: deliveryDetails.recipient_name,
+                phone_number: deliveryDetails.phone_number,
+                state: deliveryDetails.state,
+                city: deliveryDetails.city,
                 delivery_address: deliveryDetails.delivery_address,
-                phone_number: deliveryDetails.phone_number
+                delivery_instructions: deliveryDetails.delivery_instructions
             }))
 
             const { error: txError } = await supabase
@@ -96,19 +102,7 @@ const Cart = () => {
             if (txError) throw txError
 
             // Update livestock status (Sold) and decrement quantity
-            // Note: Simplest way is loop updates for now, ideally RPC function or batched
             for (const item of cart) {
-                // Decrement Quantity Logic
-                // We fetch fresh first or just blind update? Blind update decrement safer
-                // But simplified: Just set Sold? No, we have quantity now.
-                // We need to fetch current quantity and decrement.
-                // To save API calls, we'll try a single update if only 1 item, else loop.
-                // Or: Supabase doesn't support 'quantity - 1' natively in simple update without RPC.
-                // We will just set status 'Sold' if it's unique item, or decrement if quantity logic used.
-                // For this project: Just set Status='Sold' is safer if quantity=1.
-                // If quantity > 1, we need more logic. 
-                // Let's assume quantity is handled by decrementing.
-
                 const { data: lsData } = await supabase.from('livestock').select('quantity').eq('id', item.id).single()
                 const newQty = (lsData?.quantity || 1) - 1
 
@@ -193,24 +187,67 @@ const Cart = () => {
                                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input
-                                    name="phone_number"
-                                    value={deliveryDetails.phone_number}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
-                                />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                                    <input
+                                        name="phone_number"
+                                        value={deliveryDetails.phone_number}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="080..."
+                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">State/Region</label>
+                                    <input
+                                        name="state"
+                                        value={deliveryDetails.state}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="e.g. Lagos"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
+                                    />
+                                </div>
                             </div>
+
+                            <div className="grid grid-cols-1">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">City/Town</label>
+                                    <input
+                                        name="city"
+                                        value={deliveryDetails.city}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="e.g. Ikeja"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Delivery Address</label>
+                                <label className="block text-sm font-medium text-gray-700">Street Address</label>
                                 <textarea
                                     name="delivery_address"
                                     value={deliveryDetails.delivery_address}
                                     onChange={handleInputChange}
                                     required
-                                    rows="3"
+                                    rows="2"
+                                    placeholder="House number, street name..."
+                                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Delivery Instructions (Optional)</label>
+                                <textarea
+                                    name="delivery_instructions"
+                                    value={deliveryDetails.delivery_instructions}
+                                    onChange={handleInputChange}
+                                    rows="2"
+                                    placeholder="Nearest landmark, gate code, etc."
                                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
                                 />
                             </div>
