@@ -44,7 +44,7 @@ begin
       delivery_instructions
     ) values (
       p_user_id,
-      (item->>'id')::bigint,
+      (item->>'id')::uuid, -- CHANGED FROM bigint TO uuid
       (item->>'price')::numeric,
       p_payment_ref,
       'Successful',
@@ -58,7 +58,7 @@ begin
     );
 
     -- B. Update Livestock Quantity
-    select quantity into v_current_qty from public.livestock where id = (item->>'id')::bigint;
+    select quantity into v_current_qty from public.livestock where id = (item->>'id')::uuid; -- CHANGED FROM bigint TO uuid
     
     -- Handle missing quantity (default to 1)
     if v_current_qty is null then 
@@ -72,7 +72,7 @@ begin
     set 
       quantity = v_new_qty,
       status = case when v_new_qty <= 0 then 'Sold' else status end
-    where id = (item->>'id')::bigint;
+    where id = (item->>'id')::uuid; -- CHANGED FROM bigint TO uuid
     
   end loop;
 end;
