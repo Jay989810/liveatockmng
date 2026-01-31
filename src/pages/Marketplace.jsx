@@ -93,7 +93,13 @@ const Marketplace = () => {
                         {livestock.length === 0 ? (
                             <div className="col-span-full flex flex-col items-center justify-center py-24 text-gray-500 bg-white rounded-3xl shadow-sm border border-gray-100">
                                 <p className="text-xl font-medium text-gray-900">No livestock currently available</p>
-                                <p className="text-gray-400 mt-2">Check back later for new stock.</p>
+                                <p className="text-gray-400 mt-2 mb-6">Check back later for new stock.</p>
+                                <button
+                                    onClick={() => { setLoading(true); fetchAvailableLivestock(); }}
+                                    className="px-6 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold hover:bg-blue-200 transition-colors"
+                                >
+                                    Refresh Listing
+                                </button>
                             </div>
                         ) : (
                             livestock.map((item) => {

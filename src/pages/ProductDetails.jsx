@@ -81,12 +81,19 @@ const ProductDetails = () => {
 
         handleFlutterwavePayment({
             callback: (response) => {
-                if (response.status === 'successful') {
+                console.log('Flutterwave Response:', response);
+                // Ensure case-insensitive check
+                const status = response.status ? response.status.toLowerCase() : '';
+
+                if (status === 'successful' || status === 'completed') {
                     toast.loading('Processing order...', { id: 'payment-toast' })
                     recordTransaction(response)
                 } else {
+                    // ALERT USER with exact details for debugging
+                    alert(`Payment Failed Verification.\nStatus received: ${response.status}\nRef: ${response.tx_ref}`);
+                    console.error('Payment status check failed:', response);
                     setProcessing(false)
-                    toast.error('Payment failed. Please try again.')
+                    toast.error(`Payment not completed. Status: ${response.status}`)
                 }
                 closePaymentModal()
             },
