@@ -83,9 +83,24 @@ const Orders = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                        {order.status}
-                                                    </p>
+                                                    <div className="flex flex-col items-end mb-2">
+                                                        <span className="text-xs text-gray-400 uppercase tracking-wider mb-1">Status</span>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'Successful' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                            {order.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-col items-end mb-2">
+                                                        <span className="text-xs text-gray-400 uppercase tracking-wider mb-1">Delivery</span>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold border ${(order.delivery_status || 'Processing') === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                (order.delivery_status || 'Processing') === 'Shipped' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                    'bg-gray-50 text-gray-600 border-gray-200'
+                                                            }`}>
+                                                            {order.delivery_status || 'Processing'}
+                                                        </span>
+                                                    </div>
+
                                                     <p className="mt-2 text-sm text-gray-900 font-bold">
                                                         ₦{parseFloat(order.amount).toLocaleString()}
                                                     </p>

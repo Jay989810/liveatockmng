@@ -105,6 +105,7 @@ const ProductDetails = () => {
 
     const recordTransaction = async (paymentResponse) => {
         try {
+            // 1. Record the Transaction
             const { error: txError } = await supabase
                 .from('transactions')
                 .insert([{
@@ -112,14 +113,29 @@ const ProductDetails = () => {
                     livestock_id: livestock.id,
                     amount: livestock.price,
                     flutterwave_ref: paymentResponse.tx_ref,
-                    status: 'Successful'
+                    status: 'Successful',
+                    delivery_status: 'Processing' // Start as Processing
                 }])
 
             if (txError) throw txError
 
+            // 2. Decrement Quantity Logic
+            // We assume livestock.quantity is valid. Default to 1 if missing for safety.
+            const currentQty = livestock.quantity || 1;
+            const newQty = currentQty - 1;
+
+            const updates = {
+                quantity: newQty
+            }
+
+            // Should markers mark it sold if 0?
+            if (newQty <= 0) {
+                updates.status = 'Sold'
+            }
+
             const { error: liveError } = await supabase
                 .from('livestock')
-                .update({ status: 'Sold' })
+                .update(updates)
                 .eq('id', livestock.id)
 
             if (liveError) throw liveError
@@ -140,6 +156,9 @@ const ProductDetails = () => {
 
     if (!livestock) return <div className="text-center p-10">Livestock not found.</div>
 
+    // Availability Check: Status is Available AND Quantity > 0
+    const isAvailable = livestock.status === 'Available' && (livestock.quantity === undefined || livestock.quantity > 0);
+
     return (
         <div className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex-grow">
             <div className="max-w-6xl mx-auto">
@@ -158,9 +177,9 @@ const ProductDetails = () => {
                             ) : (
                                 <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
                             )}
-                            <div className={`absolute top-6 left-6 px-4 py-2 rounded-full text-sm font-bold tracking-wide shadow-sm z-10 ${livestock.status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            <div className={`absolute top-6 left-6 px-4 py-2 rounded-full text-sm font-bold tracking-wide shadow-sm z-10 ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                 }`}>
-                                {livestock.status.toUpperCase()}
+                                {isAvailable ? 'AVAILABLE' : 'SOLD OUT'}
                             </div>
                         </div>
 
@@ -205,6 +224,10 @@ const ProductDetails = () => {
                                 <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Weight</p>
                                 <p className="text-xl font-bold text-gray-900">{livestock.weight} kg</p>
                             </div>
+                            <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl col-span-2">
+                                <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Stock Available</p>
+                                <p className="text-xl font-bold text-gray-900">{livestock.quantity || 1} Remaining</p>
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-between border-t border-gray-100 pt-8 mt-auto">
@@ -215,13 +238,13 @@ const ProductDetails = () => {
 
                             <button
                                 onClick={handlePurchase}
-                                disabled={processing || livestock.status !== 'Available'}
-                                className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 ${livestock.status === 'Available'
+                                disabled={processing || !isAvailable}
+                                className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 ${isAvailable
                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                             >
-                                {processing ? 'Processing...' : livestock.status === 'Available' ? 'Buy Now' : 'Sold Out'}
+                                {processing ? 'Processing...' : isAvailable ? 'Buy Now' : 'Sold Out'}
                             </button>
                         </div>
 
