@@ -14,17 +14,34 @@ const Cart = () => {
     const [loading, setLoading] = useState(false)
 
     // Checkout Form State
-    const [deliveryDetails, setDeliveryDetails] = useState({
-        recipient_name: user?.user_metadata?.full_name || '',
-        phone_number: '',
-        state: '',
-        city: '',
-        delivery_address: '',
-        delivery_instructions: ''
+    const [deliveryDetails, setDeliveryDetails] = useState(() => {
+        try {
+            const saved = localStorage.getItem('deliveryDetails')
+            return saved ? JSON.parse(saved) : {
+                recipient_name: user?.user_metadata?.full_name || '',
+                phone_number: '',
+                state: '',
+                city: '',
+                delivery_address: '',
+                delivery_instructions: ''
+            }
+        } catch (e) {
+            return {
+                recipient_name: user?.user_metadata?.full_name || '',
+                phone_number: '',
+                state: '',
+                city: '',
+                delivery_address: '',
+                delivery_instructions: ''
+            }
+        }
     })
 
+    // Update state and persist to storage
     const handleInputChange = (e) => {
-        setDeliveryDetails({ ...deliveryDetails, [e.target.name]: e.target.value })
+        const newDetails = { ...deliveryDetails, [e.target.name]: e.target.value }
+        setDeliveryDetails(newDetails)
+        localStorage.setItem('deliveryDetails', JSON.stringify(newDetails))
     }
 
     // Flutterwave Config

@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     })
 
     // UNIQUE VERSION IDENTIFIER - UPDATE THIS ON EVERY MAJOR DEPLOYMENT
-    const APP_VERSION = 'deploy-2026-01-31-v2-persistent'
+    const APP_VERSION = 'deploy-2026-01-31-v3-fixed-logout'
 
     useEffect(() => {
         // Version Check & Cache Clear strategy
@@ -23,16 +23,18 @@ export const AuthProvider = ({ children }) => {
         if (storedVersion !== APP_VERSION) {
             console.log(`New version detected (${APP_VERSION}). Clearing stale data.`)
 
-            // Clear ONLY app-specific data, preserving keys if needed or just clear all
-            // Ideally we clear everything to be safe on a major version change
+            // Clear all data to ensure clean slate
             localStorage.clear()
             sessionStorage.clear()
-
+            // Re-save the new version immediately
             localStorage.setItem('app_version', APP_VERSION)
 
-            // We do NOT reload here if it's a fresh visit to avoid loops.
-            // But if the user was using an old version, their state might be weird.
-            // Since we cleared local storage, Supabase token is gone, so they are logged out effectively.
+            // Explicitly clear React state to reflect logout immediately
+            setUser(null)
+            setSession(null)
+            setIsAdmin(false)
+            setLoading(false) // <--- CRITICAL: Stop loading spinner so UI renders Login/Home
+
             return
         }
 
