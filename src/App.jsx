@@ -4,6 +4,7 @@ import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import Marketplace from './pages/Marketplace'
 import ProductDetails from './pages/ProductDetails'
+import Orders from './pages/Orders'
 import Success from './pages/Success'
 import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoute'
@@ -24,7 +25,7 @@ function App() {
                     {/* Protected User Routes */}
                     <Route element={<PrivateRoute />}>
                         <Route path="/" element={<Marketplace />} />
-                        <Route path="/orders" element={<div className="p-10 text-center">My Orders Page Coming Soon</div>} />
+                        <Route path="/orders" element={<Orders />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/success" element={<Success />} />
                     </Route>

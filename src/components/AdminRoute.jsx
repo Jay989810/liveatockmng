@@ -2,14 +2,12 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthProvider'
 
 const AdminRoute = () => {
-    const { user } = useAuth()
+    const { user, isAdmin } = useAuth()
 
-    // STRICT ADMIN CHECK REMOVED TEMPORARILY
-    // If you are logged in, you can VIEW the admin dashboard.
-    // However, database Row Level Security (RLS) will still prevent you from 
-    // actually *doing* anything (like deleting/adding) if you are not a real admin.
+    if (!user) return <Navigate to="/login" />
 
-    return user ? <Outlet /> : <Navigate to="/login" />
+    // Strict check: User must be logged in AND be an admin
+    return isAdmin ? <Outlet /> : <Navigate to="/" />
 }
 
 export default AdminRoute

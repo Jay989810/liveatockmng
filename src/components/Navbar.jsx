@@ -44,8 +44,8 @@ const Navbar = () => {
                             <Link to="/orders" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/orders')}`}>
                                 My Orders
                             </Link>
-                            {/* Show Admin Dashboard if user is admin OR if we want to allow access for debugging */}
-                            {(isAdmin || user?.email) && (
+                            {/* Show Admin Dashboard ONLY if user is admin */}
+                            {isAdmin && (
                                 <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
                                     Dashboard
                                 </Link>

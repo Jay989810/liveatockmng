@@ -119,7 +119,7 @@ const ProductDetails = () => {
 
             toast.dismiss('payment-toast')
             toast.success('Purchase successful!')
-            navigate('/success')
+            navigate('/orders')
 
         } catch (error) {
             console.error('Error recording transaction:', error)
@@ -210,8 +210,8 @@ const ProductDetails = () => {
                                 onClick={handlePurchase}
                                 disabled={processing || livestock.status !== 'Available'}
                                 className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 ${livestock.status === 'Available'
-                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                             >
                                 {processing ? 'Processing...' : livestock.status === 'Available' ? 'Buy Now' : 'Sold Out'}

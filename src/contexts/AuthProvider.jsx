@@ -14,38 +14,44 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true;
 
-        // Safety timeout: if Supabase takes too long, stop loading
-        const timer = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn('Auth check timed out, forcing loading false');
-                setLoading(false);
-            }
-        }, 3000); // Reduced to 3 seconds for faster response
+        // Function to handle session setup
+        const initializeAuth = async () => {
+            try {
+                // 1. Get the current session from local storage
+                const { data: { session }, error } = await supabase.auth.getSession()
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!mounted) return;
-            setSession(session)
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                checkAdmin(session.user.id)
-            } else {
-                setLoading(false)
-            }
-        }).catch(err => {
-            console.error('Session check failed:', err)
-            if (mounted) setLoading(false)
-        })
+                if (error) throw error
 
+                if (mounted) {
+                    if (session?.user) {
+                        setSession(session)
+                        setUser(session.user)
+                        await checkAdmin(session.user.id)
+                    } else {
+                        // Definitely logged out
+                        setLoading(false)
+                    }
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error)
+                if (mounted) setLoading(false)
+            }
+        }
+
+        initializeAuth()
+
+        // 2. Set up live listener for auth changes (sign in, sign out, refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (!mounted) return;
+            if (!mounted) return
+
             setSession(session)
             setUser(session?.user ?? null)
 
-            // Only set loading true if we are logging in (session exists)
-            // If we are logging out (session null), we want to clear fast
             if (session?.user) {
-                setLoading(true)
-                await checkAdmin(session.user.id)
+                // If we get a user update and we aren't loading, or if we switched users
+                // we might want to refresh admin status.
+                // But mainly we care about the initial load or sign-in.
+                if (!isAdmin) await checkAdmin(session.user.id)
             } else {
                 setIsAdmin(false)
                 setLoading(false)
@@ -54,7 +60,6 @@ export const AuthProvider = ({ children }) => {
 
         return () => {
             mounted = false;
-            clearTimeout(timer);
             subscription.unsubscribe()
         }
     }, [])
