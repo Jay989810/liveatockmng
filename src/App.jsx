@@ -10,6 +10,7 @@ import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import Cart from './pages/Cart' // Import Cart
 import { Toaster } from 'react-hot-toast'
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                     <Route element={<PrivateRoute />}>
                         <Route path="/" element={<Marketplace />} />
                         <Route path="/orders" element={<Orders />} />
+                        <Route path="/cart" element={<Cart />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/success" element={<Success />} />
                     </Route>

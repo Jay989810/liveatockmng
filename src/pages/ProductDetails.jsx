@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3'
 import { useAuth } from '../contexts/AuthProvider'
+import { useCart } from '../contexts/CartContext'
 import Spinner from '../components/Spinner'
 import toast from 'react-hot-toast'
 
@@ -10,9 +11,9 @@ const ProductDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const { user } = useAuth()
+    const { addToCart } = useCart()
     const [livestock, setLivestock] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [processing, setProcessing] = useState(false)
     const [selectedImage, setSelectedImage] = useState(null)
     const [imageList, setImageList] = useState([])
 
@@ -50,106 +51,21 @@ const ProductDetails = () => {
         }
     }
 
-    // Flutterwave Configuration
-    const paymentConfig = {
-        public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
-        tx_ref: Date.now(),
-        amount: livestock?.price,
-        currency: 'NGN',
-        payment_options: 'card,mobilemoney,ussd',
-        customer: {
-            email: user?.email,
-            phone_number: '',
-            name: user?.user_metadata?.full_name || 'Valued Customer',
-        },
-        customizations: {
-            title: 'Livestock Purchase',
-            description: `Payment for ${livestock?.breed}`,
-            logo: 'https://cdn-icons-png.flaticon.com/512/2395/2395796.png',
-        },
+    const handleAddToCart = () => {
+        if (!user) {
+            toast.error('Please login to add to cart.')
+            return
+        }
+        addToCart(livestock)
     }
 
-    const handleFlutterwavePayment = useFlutterwave(paymentConfig)
-
-    const handlePurchase = () => {
+    const handleBuyNow = () => {
         if (!user) {
             toast.error('Please login to purchase.')
             return
         }
-
-        setProcessing(true)
-
-        handleFlutterwavePayment({
-            callback: (response) => {
-                console.log('Flutterwave Response:', response);
-                // Ensure case-insensitive check
-                const status = response.status ? response.status.toLowerCase() : '';
-
-                if (status === 'successful' || status === 'completed') {
-                    toast.loading('Processing order...', { id: 'payment-toast' })
-                    recordTransaction(response)
-                } else {
-                    // ALERT USER with exact details for debugging
-                    alert(`Payment Failed Verification.\nStatus received: ${response.status}\nRef: ${response.tx_ref}`);
-                    console.error('Payment status check failed:', response);
-                    setProcessing(false)
-                    toast.error(`Payment not completed. Status: ${response.status}`)
-                }
-                closePaymentModal()
-            },
-            onClose: () => {
-                setProcessing(false)
-            },
-        })
-    }
-
-    const recordTransaction = async (paymentResponse) => {
-        try {
-            // 1. Record the Transaction
-            const { error: txError } = await supabase
-                .from('transactions')
-                .insert([{
-                    user_id: user.id,
-                    livestock_id: livestock.id,
-                    amount: livestock.price,
-                    flutterwave_ref: paymentResponse.tx_ref,
-                    status: 'Successful',
-                    delivery_status: 'Processing' // Start as Processing
-                }])
-
-            if (txError) throw txError
-
-            // 2. Decrement Quantity Logic
-            // We assume livestock.quantity is valid. Default to 1 if missing for safety.
-            const currentQty = livestock.quantity || 1;
-            const newQty = currentQty - 1;
-
-            const updates = {
-                quantity: newQty
-            }
-
-            // Should markers mark it sold if 0?
-            if (newQty <= 0) {
-                updates.status = 'Sold'
-            }
-
-            const { error: liveError } = await supabase
-                .from('livestock')
-                .update(updates)
-                .eq('id', livestock.id)
-
-            if (liveError) throw liveError
-
-            toast.dismiss('payment-toast')
-            toast.success('Purchase successful!')
-            navigate('/orders')
-
-        } catch (error) {
-            console.error('Error recording transaction:', error)
-            toast.dismiss('payment-toast')
-            toast.error('Payment successful but error recording order. Contact support.')
-            setProcessing(false)
-        }
+        addToCart(livestock)
+        navigate('/cart')
     }
 
     if (loading) return <Spinner />
@@ -230,22 +146,34 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between border-t border-gray-100 pt-8 mt-auto">
+                        <div className="flex items-center justify-between border-t border-gray-100 pt-8 mt-auto space-x-4">
                             <div>
-                                <p className="text-gray-400 text-sm font-medium mb-1">Total Price</p>
-                                <p className="text-4xl font-extrabold text-blue-600 tracking-tight">₦{parseFloat(livestock.price).toLocaleString()}</p>
+                                <p className="text-gray-400 text-sm font-medium mb-1">Price</p>
+                                <p className="text-3xl font-extrabold text-blue-600 tracking-tight">₦{parseFloat(livestock.price).toLocaleString()}</p>
                             </div>
 
-                            <button
-                                onClick={handlePurchase}
-                                disabled={processing || !isAvailable}
-                                className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 ${isAvailable
-                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    }`}
-                            >
-                                {processing ? 'Processing...' : isAvailable ? 'Buy Now' : 'Sold Out'}
-                            </button>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={handleAddToCart}
+                                    disabled={!isAvailable}
+                                    className={`px-6 py-4 rounded-xl font-bold text-lg shadow-md transition-all transform hover:-translate-y-1 ${isAvailable
+                                        ? 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-transparent'
+                                        }`}
+                                >
+                                    Add to Cart
+                                </button>
+                                <button
+                                    onClick={handleBuyNow}
+                                    disabled={!isAvailable}
+                                    className={`px-6 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 ${isAvailable
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                >
+                                    Buy Now
+                                </button>
+                            </div>
                         </div>
 
                     </div>

@@ -19,6 +19,7 @@ const AdminDashboard = () => {
         age: '',
         weight: '',
         price: '',
+        quantity: 1, // New Quantity Field
         status: 'Available',
         health_notes: '',
         images: [], // File objects for upload
@@ -139,6 +140,7 @@ const AdminDashboard = () => {
                 age: formData.age,
                 weight: formData.weight,
                 price: formData.price,
+                quantity: formData.quantity, // New Quantity
                 status: formData.status,
                 health_notes: formData.health_notes,
                 images: finalImageUrls, // New Array Column
@@ -169,6 +171,7 @@ const AdminDashboard = () => {
                 age: '',
                 weight: '',
                 price: '',
+                quantity: 1,
                 status: 'Available',
                 health_notes: '',
                 images: [],
@@ -200,6 +203,7 @@ const AdminDashboard = () => {
             age: item.age,
             weight: item.weight,
             price: item.price,
+            quantity: item.quantity || 1,
             status: item.status,
             health_notes: item.health_notes || '',
             images: [],
@@ -231,6 +235,23 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error('Error deleting livestock:', error.message)
             toast.error('Error deleting livestock', { id: toastId })
+        }
+    }
+
+    const handleUpdateDeliveryStatus = async (orderId, newStatus) => {
+        const toastId = toast.loading('Updating status...')
+        try {
+            const { error } = await supabase
+                .from('transactions')
+                .update({ delivery_status: newStatus })
+                .eq('id', orderId)
+
+            if (error) throw error
+            toast.success('Status updated!', { id: toastId })
+            fetchOrders() // Refresh list
+        } catch (error) {
+            console.error('Error updating status:', error)
+            toast.error('Failed to update status', { id: toastId })
         }
     }
 
@@ -355,6 +376,20 @@ const AdminDashboard = () => {
                                     </div>
 
                                     <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Quantity (Stock)</label>
+                                        <input
+                                            name="quantity"
+                                            type="number"
+                                            placeholder="e.g., 1"
+                                            min="0"
+                                            value={formData.quantity}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
                                         <label className="text-sm font-medium text-gray-700">Status</label>
                                         <select
                                             name="status"
@@ -424,7 +459,7 @@ const AdminDashboard = () => {
                                                 onClick={() => {
                                                     setEditingId(null);
                                                     setFormData({
-                                                        tag_number: '', breed: '', age: '', weight: '', price: '', status: 'Available', health_notes: '', images: [], image_display_urls: []
+                                                        tag_number: '', breed: '', age: '', weight: '', price: '', quantity: 1, status: 'Available', health_notes: '', images: [], image_display_urls: []
                                                     });
                                                 }}
                                                 className="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors"
@@ -449,7 +484,7 @@ const AdminDashboard = () => {
                                     <thead className="text-xs text-gray-700 uppercase bg-gray-50/50">
                                         <tr>
                                             <th scope="col" className="px-6 py-4">Image</th>
-                                            <th scope="col" className="px-6 py-4">Tag #</th>
+                                            <th scope="col" className="px-6 py-4">Tag # (Stock)</th>
                                             <th scope="col" className="px-6 py-4">Price</th>
                                             <th scope="col" className="px-6 py-4">Status</th>
                                             <th scope="col" className="px-6 py-4 text-center">Actions</th>
@@ -475,7 +510,10 @@ const AdminDashboard = () => {
                                                                 <span className="text-xs text-gray-400 block mt-1">+{item.images.length - 1} more</span>
                                                             )}
                                                         </td>
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{item.tag_number}</td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-medium text-gray-900">{item.tag_number}</div>
+                                                            <div className="text-xs text-gray-500">Qty: {item.quantity || 1}</div>
+                                                        </td>
                                                         <td className="px-6 py-4 text-gray-900 font-semibold">₦{parseFloat(item.price).toLocaleString()}</td>
                                                         <td className="px-6 py-4">
                                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 'Available' ? 'bg-green-100 text-green-800' :
@@ -510,10 +548,10 @@ const AdminDashboard = () => {
                                     <tr>
                                         <th scope="col" className="px-6 py-4">Date</th>
                                         <th scope="col" className="px-6 py-4">Customer</th>
+                                        <th scope="col" className="px-6 py-4">Delivery</th>
                                         <th scope="col" className="px-6 py-4">Item</th>
-                                        <th scope="col" className="px-6 py-4">Amount</th>
-                                        <th scope="col" className="px-6 py-4">Status</th>
-                                        <th scope="col" className="px-6 py-4">Ref</th>
+                                        <th scope="col" className="px-6 py-4">Amt/Status</th>
+                                        <th scope="col" className="px-6 py-4">Tracking</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -531,22 +569,37 @@ const AdminDashboard = () => {
                                                     <p className="font-medium text-gray-900">{order.profiles?.full_name || 'Unknown'}</p>
                                                     <p className="text-xs text-gray-500">{order.profiles?.email}</p>
                                                 </td>
+                                                <td className="px-6 py-4 max-w-xs truncate">
+                                                    <p className="font-medium text-gray-900">{order.recipient_name || 'Same as Cust.'}</p>
+                                                    <p className="text-xs text-gray-500 truncate">{order.delivery_address || 'No Address'}</p>
+                                                    <p className="text-xs text-gray-500">{order.phone_number}</p>
+                                                </td>
                                                 <td className="px-6 py-4">
-                                                    <p className="font-medium text-gray-900">{order.livestock?.breed}</p>
+                                                    <p className="font-medium text-gray-900">{order.livestock?.breed || 'Deleted'}</p>
                                                     <p className="text-xs text-gray-500">Tag: {order.livestock?.tag_number}</p>
                                                 </td>
-                                                <td className="px-6 py-4 font-semibold text-gray-900">
-                                                    ₦{parseFloat(order.amount).toLocaleString()}
-                                                </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'Successful' ? 'bg-green-100 text-green-800' :
-                                                            order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                                                    <p className="font-semibold text-gray-900">₦{parseFloat(order.amount).toLocaleString()}</p>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold mt-1 inline-block ${order.status === 'Successful' || order.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                                        order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                                                         }`}>
                                                         {order.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-xs font-mono text-gray-500">
-                                                    {order.flutterwave_ref || '-'}
+                                                <td className="px-6 py-4">
+                                                    <select
+                                                        value={order.delivery_status || 'Processing'}
+                                                        onChange={(e) => handleUpdateDeliveryStatus(order.id, e.target.value)}
+                                                        className={`text-xs font-bold py-1 px-2 rounded border focus:outline-none cursor-pointer ${(order.delivery_status || 'Processing') === 'Delivered'
+                                                                ? 'bg-green-50 text-green-700 border-green-200'
+                                                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                            }`}
+                                                    >
+                                                        <option value="Processing">Processing</option>
+                                                        <option value="Shipped">Shipped</option>
+                                                        <option value="In Transit">In Transit</option>
+                                                        <option value="Delivered">Delivered</option>
+                                                    </select>
                                                 </td>
                                             </tr>
                                         ))

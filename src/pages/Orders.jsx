@@ -80,6 +80,10 @@ const Orders = () => {
                                                             Tag: {livestock?.tag_number || 'N/A'}
                                                         </p>
                                                         <p className="text-xs text-gray-400">Order ID: {order.id.slice(0, 8)}</p>
+                                                        <div className="mt-1 text-xs text-gray-500">
+                                                            <p><span className="font-semibold">Delivering to:</span> {order.recipient_name || 'You'}</p>
+                                                            <p className="truncate max-w-xs">{order.delivery_address}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end">
@@ -94,8 +98,8 @@ const Orders = () => {
                                                     <div className="flex flex-col items-end mb-2">
                                                         <span className="text-xs text-gray-400 uppercase tracking-wider mb-1">Delivery</span>
                                                         <span className={`px-2 py-1 rounded-full text-xs font-bold border ${(order.delivery_status || 'Processing') === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                (order.delivery_status || 'Processing') === 'Shipped' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                                    'bg-gray-50 text-gray-600 border-gray-200'
+                                                            (order.delivery_status || 'Processing') === 'Shipped' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                'bg-gray-50 text-gray-600 border-gray-200'
                                                             }`}>
                                                             {order.delivery_status || 'Processing'}
                                                         </span>
