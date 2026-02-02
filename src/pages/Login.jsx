@@ -74,7 +74,7 @@ const Login = () => {
             <div className="relative z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">Welcome Back</h1>
-                    <p className="text-sm text-gray-200">Sign in to manage your trading</p>
+                    <p className="text-sm text-gray-200">Sign in</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-6">
