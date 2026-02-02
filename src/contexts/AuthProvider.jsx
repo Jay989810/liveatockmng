@@ -102,26 +102,43 @@ export const AuthProvider = ({ children }) => {
 
     const checkAdmin = async (userId) => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('is_admin')
-                .eq('id', userId)
-                .single()
+            // 1. Try RPC check with a timeout
+            const rpcPromise = supabase.rpc('check_is_admin', { check_user_id: userId });
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request user timeout')), 10000)
+            );
 
-            if (data) {
-                const isAdminValue = data.is_admin || false
-                setIsAdmin(isAdminValue)
-                if (isAdminValue) localStorage.setItem('livestock_is_admin', 'true')
-                else localStorage.removeItem('livestock_is_admin')
-            } else {
-                setIsAdmin(false)
-                localStorage.removeItem('livestock_is_admin')
+            const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
+
+            if (!error && data === true) {
+                setIsAdmin(true)
+                localStorage.setItem('livestock_is_admin', 'true')
+                return true
+            } else if (error) {
+                console.warn('RPC check failed, falling back to table query:', error.message);
+                // Fallback to direct table query
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('is_admin')
+                    .eq('id', userId)
+                    .single();
+
+                if (!profileError && profile?.is_admin === true) {
+                    setIsAdmin(true)
+                    localStorage.setItem('livestock_is_admin', 'true')
+                    return true
+                }
             }
+
+            // Default to false if both failed or returned false
+            setIsAdmin(false)
+            localStorage.removeItem('livestock_is_admin')
+            return false
+
         } catch (error) {
             console.error('Error checking admin status:', error)
-            // Do NOT wipe admin status on error if we had it cached? 
-            // Safer to deny access on error for security.
             setIsAdmin(false)
+            return false
         } finally {
             setLoading(false)
         }

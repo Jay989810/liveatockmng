@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
+import AdminLogin from './pages/AdminLogin'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import Marketplace from './pages/Marketplace'
@@ -21,15 +22,18 @@ function App() {
             <div className="flex-grow flex flex-col">
                 <Routes>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/admin/login" element={<AdminLogin />} />
                     <Route path="/register" element={<Register />} />
+
+                    {/* Public Routes */}
+                    <Route path="/" element={<Marketplace />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/product/:id" element={<ProductDetails />} />
+                    <Route path="/success" element={<Success />} />
+                    <Route path="/orders" element={<Orders />} />
 
                     {/* Protected User Routes */}
                     <Route element={<PrivateRoute />}>
-                        <Route path="/" element={<Marketplace />} />
-                        <Route path="/orders" element={<Orders />} />
-                        <Route path="/cart" element={<Cart />} />
-                        <Route path="/product/:id" element={<ProductDetails />} />
-                        <Route path="/success" element={<Success />} />
                     </Route>
 
                     {/* Protected Admin Routes */}

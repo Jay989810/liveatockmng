@@ -32,6 +32,7 @@ const Cart = () => {
         } catch (e) {
             return {
                 recipient_name: user?.user_metadata?.full_name || '',
+                email: user?.email || '',
                 phone_number: '',
                 state: '',
                 city: '',
@@ -56,7 +57,7 @@ const Cart = () => {
         currency: 'NGN',
         payment_options: 'card,mobilemoney,ussd',
         customer: {
-            email: user?.email,
+            email: user?.email || deliveryDetails.email,
             phone_number: deliveryDetails.phone_number,
             name: deliveryDetails.recipient_name,
         },
@@ -71,9 +72,15 @@ const Cart = () => {
 
     const handleCheckout = (e) => {
         e.preventDefault()
-        if (!user) {
-            toast.error('Please login to checkout')
-            navigate('/login')
+        // Removed auth check to allow guest checkout
+        if (cart.length === 0) {
+            toast.error('Cart is empty')
+            return
+        }
+
+        // Validate email for guests
+        if (!user && !deliveryDetails.email) {
+            toast.error('Please provide an email address')
             return
         }
         if (cart.length === 0) {
@@ -118,7 +125,7 @@ const Cart = () => {
 
             // Call the secure RPC function
             const { error: rpcError } = await supabase.rpc('complete_order', {
-                p_user_id: user.id,
+                p_user_id: user ? user.id : null,
                 p_items: orderItems,
                 p_payment_ref: paymentResponse.tx_ref,
                 p_recipient_name: safeDetails.recipient_name,
@@ -133,12 +140,17 @@ const Cart = () => {
 
             clearCart()
             toast.success('Order placed successfully!', { id: toastId })
-            navigate('/orders')
 
-        } catch (error) {
-            console.error('Order processing error:', error)
-            // Show the ACTUAL error message to the user/developer
-            toast.error(`Order failed: ${error.message || error.details || 'Contact support'}`, { id: toastId, duration: 5000 })
+            // Navigate to orders with state to show the success message/details even for guests
+            navigate('/orders', {
+                state: {
+                    newOrder: true,
+                    items: cart,
+                    details: safeDetails,
+                    total: cartTotal,
+                    tx_ref: paymentResponse.tx_ref
+                }
+            })
         } finally {
             if (mounted) setLoading(false)
             closePaymentModal()
@@ -204,6 +216,21 @@ const Cart = () => {
                                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
                                 />
                             </div>
+
+                            {!user && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={deliveryDetails.email}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="your@email.com"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 outline-none"
+                                    />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -283,9 +310,10 @@ const Cart = () => {
                             </div>
                         </form>
                     </div>
-                )}
-            </div>
-        </div>
+                )
+                }
+            </div >
+        </div >
     )
 }
 

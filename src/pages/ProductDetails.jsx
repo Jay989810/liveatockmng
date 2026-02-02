@@ -52,18 +52,10 @@ const ProductDetails = () => {
     }
 
     const handleAddToCart = () => {
-        if (!user) {
-            toast.error('Please login to add to cart.')
-            return
-        }
         addToCart(livestock)
     }
 
     const handleBuyNow = () => {
-        if (!user) {
-            toast.error('Please login to purchase.')
-            return
-        }
         addToCart(livestock)
         navigate('/cart')
     }

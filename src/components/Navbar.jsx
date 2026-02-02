@@ -24,8 +24,38 @@ const Navbar = () => {
 
     const isActive = (path) => location.pathname === path ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
 
-    if (!user && (location.pathname === '/login' || location.pathname === '/register')) return null;
+    // Hide Navbar on specific auth pages
+    if (!user && (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/admin/login')) return null;
 
+    // Simplified Admin Navbar
+    if (location.pathname.startsWith('/admin')) {
+        return (
+            <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16">
+                        <div className="flex items-center">
+                            <Link to="/admin" className="flex-shrink-0 flex items-center">
+                                <span className="text-xl font-extrabold text-red-600 tracking-tight">Livestock Admin</span>
+                            </Link>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
+                                Dashboard
+                            </Link>
+                            <button
+                                onClick={handleSignOut}
+                                className="ml-4 px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        )
+    }
+
+    // Standard Customer Navbar
     return (
         <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,13 +74,6 @@ const Navbar = () => {
                         <Link to="/orders" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/orders')}`}>
                             My Orders
                         </Link>
-
-                        {/* Admin Dashboard Link */}
-                        {isAdmin && (
-                            <Link to="/admin" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin')}`}>
-                                Dashboard
-                            </Link>
-                        )}
 
                         {/* Cart Link */}
                         <Link to="/cart" className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/cart')}`}>
@@ -121,12 +144,6 @@ const Navbar = () => {
                         <Link to="/cart" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                             Cart ({cart.length})
                         </Link>
-
-                        {isAdmin && (
-                            <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                                Dashboard
-                            </Link>
-                        )}
 
                         {user ? (
                             <button

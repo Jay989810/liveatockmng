@@ -82,7 +82,22 @@ const AdminDashboard = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
+
+        setFormData(prev => {
+            let newState = { ...prev, [name]: value }
+
+            // Auto-update status if quantity changes
+            if (name === 'quantity') {
+                const qty = parseInt(value)
+                if (qty > 0 && prev.status === 'Sold') {
+                    newState.status = 'Available'
+                } else if (qty === 0) {
+                    newState.status = 'Sold'
+                }
+            }
+
+            return newState
+        })
     }
 
     const handleImageChange = (e) => {
@@ -141,7 +156,9 @@ const AdminDashboard = () => {
                 weight: formData.weight,
                 price: formData.price,
                 quantity: formData.quantity, // New Quantity
-                status: formData.status,
+                status: parseInt(formData.quantity) > 0 && formData.status === 'Sold' ? 'Available' :
+                    parseInt(formData.quantity) === 0 ? 'Sold' :
+                        formData.status,
                 health_notes: formData.health_notes,
                 images: finalImageUrls, // New Array Column
                 image_url: primaryImage // Keep this for backward compat
@@ -220,10 +237,11 @@ const AdminDashboard = () => {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this livestock?')) return
+        if (!window.confirm('Are you sure you want to delete this livestock? This will permanently remove it and all associated orders.')) return
 
-        const toastId = toast.loading('Deleting...')
+        const toastId = toast.loading('Deleting permanently...')
         try {
+            // Hard Delete Implementation (Requires ON DELETE CASCADE in DB)
             const { error } = await supabase
                 .from('livestock')
                 .delete()
@@ -234,7 +252,7 @@ const AdminDashboard = () => {
             fetchData()
         } catch (error) {
             console.error('Error deleting livestock:', error.message)
-            toast.error('Error deleting livestock', { id: toastId })
+            toast.error('Error: ' + error.message, { id: toastId })
         }
     }
 

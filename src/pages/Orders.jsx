@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthProvider'
 import Spinner from '../components/Spinner'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const Orders = () => {
     const { user } = useAuth()
+    const location = useLocation()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
 
+    const newOrder = location.state?.newOrder ? location.state : null;
+
     useEffect(() => {
-        if (user) fetchOrders()
+        if (user) {
+            fetchOrders()
+        } else {
+            setLoading(false)
+        }
     }, [user])
 
     const fetchOrders = async () => {
@@ -37,7 +44,38 @@ const Orders = () => {
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
 
-                {orders.length === 0 ? (
+                {/* Guest Order Confirmation View */}
+                {newOrder && (
+                    <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8 shadow-sm">
+                        <div className="flex items-center mb-4">
+                            <div className="bg-green-100 p-2 rounded-full mr-4">
+                                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-green-800">Order Placed Successfully!</h2>
+                                <p className="text-green-700 text-sm">Thank you for your purchase. Your order reference is <span className="font-mono font-bold">{newOrder.tx_ref}</span></p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-4 border border-green-100">
+                            <h3 className="font-bold text-gray-800 mb-2">Order Summary</h3>
+                            <p className="text-sm text-gray-600 mb-1">Total Paid: <span className="font-bold text-gray-900">₦{newOrder.total?.toLocaleString()}</span></p>
+                            <p className="text-sm text-gray-600">Delivering to: <span className="font-medium">{newOrder.details?.recipient_name}</span> at {newOrder.details?.city}</p>
+                        </div>
+                        <p className="mt-4 text-xs text-green-700 italic">Please save this page or screenshot it for your records, as you are checking out as a guest.</p>
+                    </div>
+                )}
+
+                {!user && !newOrder ? (
+                    <div className="text-center bg-white p-12 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Guest Access</h3>
+                        <p className="text-gray-500 mb-6">Please sign in to view your full order history.</p>
+                        <div className="flex justify-center space-x-4">
+                            <Link to="/login" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Sign In</Link>
+                            <Link to="/register" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200">Register</Link>
+                        </div>
+                    </div>
+                ) : orders.length === 0 && !newOrder ? (
                     <div className="text-center bg-white p-12 rounded-2xl shadow-sm border border-gray-100">
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
